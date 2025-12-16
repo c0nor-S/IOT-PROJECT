@@ -34,7 +34,7 @@ WebServer server(80);
 #define BUZZER_PIN 14
 
 // Global variables
-int state = LOW;                  // Motion state
+int state = LOW;                   // Motion state
 int lightInit;                     // Initial LDR value
 int lightVal;                      // Current LDR reading
 int latestSoundValue = 0;          // Last sound reading
@@ -62,12 +62,12 @@ const char* ntpServer = "pool.ntp.org";
 const long gmtOffset_sec = 0;
 const int daylightOffset_sec = 3600;
 
-const unsigned long alarm_duration = 60UL * 1000UL;
-unsigned long lastMotionTime = 0;   // Stores timestamp of last motion
-const long ignoreTime = 3000;       // 3-second cooldown for PIR sensor
-unsigned long lastDHTRead = 0;      // Stores timestamp of last DHT reading
-const unsigned long dhtInterval = 2000; // Minimum time between temp/humi reads
-unsigned long vibrationEnd = 0;     // Scheduled stop time
+const unsigned long alarm_duration = 60UL * 1000UL;     // 60 Second Timer
+unsigned long lastMotionTime = 0;                       // Stores timestamp of last motion
+const long ignoreTime = 3000;                           // 3-second cooldown for PIR sensor
+unsigned long lastDHTRead = 0;                          // Stores timestamp of last DHT reading
+const unsigned long dhtInterval = 2000;                 // Minimum time between temp/humi reads
+unsigned long vibrationEnd = 0;                         // Scheduled stop time
 unsigned long buzzerEnd = 0;
 
 #include "DHTSensor.h"
