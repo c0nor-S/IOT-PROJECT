@@ -39,6 +39,7 @@ int lightInit;                     // Initial LDR value
 int lightVal;                      // Current LDR reading
 int latestSoundValue = 0;          // Last sound reading
 bool checkSoundAlert = false;
+float currentTemp = 0;
 
 int alarmHour = 0;
 int alarmMinute = 0;
@@ -274,7 +275,16 @@ void handleAlarmBuzzer() {
 }
 
 void handleAlarmFan() {
-    digitalWrite(FAN_PIN, (alarmTriggered && fanToggle) ? HIGH : LOW);
+    if (!alarmTriggered || !fanToggle) {
+        digitalWrite(FAN_PIN, LOW);
+        return;
+    }
+    if (currentTemp <= 20) {
+        digitalWrite(FAN_PIN, LOW);
+    }
+    else {
+        digitalWrite(FAN_PIN, HIGH);
+    }
 }
 
 void handleAlarmVibration() {
