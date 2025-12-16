@@ -110,6 +110,7 @@ void handleDashboard() {
     int soundValue = analogRead(SOUND_PIN);
     const char* motionStr = motionActive ? "YES" : "NO";
 
+    //Allows Live Readings To Display On The Dashboard
     String dashboardHTML = dashPagePart1;
     dashboardHTML += String(temp);
     dashboardHTML += dashPagePart2;
@@ -186,6 +187,7 @@ void setup() {
     }
 
     // Server routes
+    //Links All Files To Main
     server.on("/inline", []() { server.send(200, "text/plain", "this works as well"); });
     server.on("/", []() { server.send(200, "text/html", homePagePart1); });
     server.on("/index.html", []() { server.send(200, "text/html", homePagePart1); });
@@ -200,6 +202,7 @@ void setup() {
     server.on("/demo.css", []() { server.send(200, "text/css", demoCSS); });
     server.on("/demo.js", []() { server.send(200, "application/javascript", demoJS); });
 
+    //Saves Toggle Value Depending If ON / OFF
     server.on("/saveSettings", []() {
         if (server.hasArg("light")) {
             lightToggle = server.arg("light").toInt() == 1;
@@ -216,6 +219,7 @@ void setup() {
         server.send(200, "text/plain", "Settings Saved");
     });
 
+    //Saves Alarm Time 
     server.on("/setAlarm", []() {
         if (server.hasArg("hour") && server.hasArg("minute")) {
             alarmHour = server.arg("hour").toInt();
@@ -244,6 +248,7 @@ void handleNotFound() {
     server.send(404, "text/plain", message);
 }
 
+//Triggers LED When Toggle Is On AND Alarm Is Active
 void handleAlarmLED() {
     if (!alarmTriggered || !lightToggle) {
         digitalWrite(LED, LOW);
@@ -257,7 +262,7 @@ void handleAlarmLED() {
         lastBlinkTime = currentMillis;
     }
 }
-
+//Triggers BUZZER When Toggle Is On AND Alarm Is Active
 void handleAlarmBuzzer() {
     if (!alarmTriggered || !buzzerToggle) {
         analogWrite(BUZZER_PIN, 0);
@@ -276,6 +281,7 @@ void handleAlarmBuzzer() {
     }
 }
 
+//Triggers FAN When Toggle Is On And Alarm Is Active
 void handleAlarmFan() {
     if (!alarmTriggered || !fanToggle) {
         digitalWrite(FAN_PIN, LOW);
@@ -289,6 +295,7 @@ void handleAlarmFan() {
     }
 }
 
+//Triggers VIBRATION When Toggle Is On And Alarm Is Active
 void handleAlarmVibration() {
     digitalWrite(VIBRATION_PIN, (alarmTriggered && vibrationToggle) ? HIGH : LOW);
 }
@@ -302,19 +309,20 @@ void loop() {
     checkLDR();
     checkSound(currentTime);
 
+    //Gets Real Time 
     struct tm timeinfo;
     if (getLocalTime(&timeinfo)) {
         int currentHour = timeinfo.tm_hour;
         int currentMinute = timeinfo.tm_min;
 
-        // Trigger alarm at set time
+        // Trigger Alarm At Set Time - When Input Time = Real Time
         if (!alarmTriggered && currentHour == alarmHour && currentMinute == alarmMinute) {
             alarmTriggered = true;
             alarmStartTime = millis();
             Serial.println("ALARM TRIGGERED");
         }
 
-        // Handle all alarm devices
+        // Handle All Alarm Devices
         if (alarmTriggered) {
             handleAlarmLED();
             handleAlarmBuzzer();
@@ -322,7 +330,7 @@ void loop() {
             handleAlarmVibration();
         }
 
-        // End alarm after duration
+        // End Alarm After Duration
         if (alarmTriggered && (millis() - alarmStartTime >= alarm_duration)) {
             alarmTriggered = false;
             buzzerTriggered = false;

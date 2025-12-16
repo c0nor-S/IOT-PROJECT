@@ -1,6 +1,7 @@
 
 // SOUND //
 
+//Averages Sound Level
 void checkSound(unsigned long currentTime) {
   long total = 0;
   

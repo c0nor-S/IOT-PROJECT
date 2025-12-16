@@ -1,6 +1,7 @@
 
 // DHT CODE //
 
+// Gathers Temp & Humi Values
 void readDHT(unsigned long currentTime) {
   if (currentTime - lastDHTRead > dhtInterval) {
     lastDHTRead = currentTime;

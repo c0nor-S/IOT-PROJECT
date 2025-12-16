@@ -1,6 +1,7 @@
 
 // LDR CODE //
 
+//Averages Light Level
 void checkLDR() {
   int total = 0;
 

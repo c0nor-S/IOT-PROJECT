@@ -1,6 +1,7 @@
 
 // PIR //
 
+//Tracks Motion And Includes Delay Incase Of False Triggers
 void checkPIR(unsigned long currentTime) {
   int val = digitalRead(PIR_SENSOR);
 
