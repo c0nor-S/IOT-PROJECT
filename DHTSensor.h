@@ -1,5 +1,5 @@
 
-// DHT & FAN //
+// DHT CODE //
 
 void readDHT(unsigned long currentTime) {
   if (currentTime - lastDHTRead > dhtInterval) {
