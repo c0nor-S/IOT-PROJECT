@@ -60,15 +60,22 @@ String dashPagePart6 = F(R"=====(</p>
   </footer>
 
   <script>
+  //Fetches Updated Dashboard Data
     function refreshDashboard() {
+      //Sends Request To Backend Endpoint/dashdata
       fetch('/dashData')
+      //Converts Response Into Text (HTML CONTENT)
       .then(response => response.text())
+      //Replace Dashboard With Updated Data
       .then(html => {
         document.querySelector('.dashboard-readings').innerHTML = html;
       })
+      //Log Error If Something Goes Wrong
       .catch(err => console.error('Error Refreshing Dashboard:', err));
     }
+    //Automatically Refresh Dashboard Every 2 Seconds
     setInterval(refreshDashboard, 2000);
+    //Load dashboard Immedidately When Page Finishes Loading
     window.addEventListener('DOMContentLoaded', refreshDashboard);
   </script>
 
