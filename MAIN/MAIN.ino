@@ -10,10 +10,6 @@
 #include "dashCSS.h"
 #include "contpage.h"
 #include "contCSS.h"
-/* 
-#include "feat.h"
-#include "featCSS.h" 
-*/
 #include "demopage.h"
 #include "demoCSS.h"
 #include "demoJS.h"
