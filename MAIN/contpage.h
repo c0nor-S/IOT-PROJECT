@@ -64,20 +64,30 @@ String contPagePart1 = F(R"=====(<!DOCTYPE html>
   </footer>
   
 <script>
+//Wait Until The Page Is Fully Loaded
 window.addEventListener('DOMContentLoaded', () => {
+    //Get Referance To The Save Button
     const btn = document.getElementById("save-btn");
 
+//When Save Button Is Clicked
     btn.addEventListener('click', () => {
+        //Check Toggle States: Checked = TRUE
+        //Convert Boolean 1 (ON) or 0 (OFF)
         const light = document.getElementById('light-toggle').checked ? 1 : 0;
         const fan = document.getElementById('fan-toggle').checked ? 1 : 0;
         const sound = document.getElementById('sound-toggle').checked ? 1 : 0;
         const vibration = document.getElementById('vibration-toggle').checked ? 1 : 0;
 
+        //Build Query String Parameters
         const params = `light=${light}&fan=${fan}&sound=${sound}&vibration=${vibration}`;
+        //Contruct Backend URL
         const url = `/saveSettings?${params}`;
 
+        //Send Request To Backend
         fetch(url)
+        //Convert Response To Text
             .then(response => response.text())
+            //If Successfull, Show Which Devices Are On
             .then(data => {
                 alert("Settings Sent!\nCurrently HIGH: " + 
                     [light && "Light", fan && "Fan", sound && "Sound", vibration && "Vibration"]
@@ -85,6 +95,7 @@ window.addEventListener('DOMContentLoaded', () => {
                         .join(", ")
                 );
             })
+            //If Request Fails
             .catch(err => {
                 console.error(err);
                 alert("Failed to send settings");
