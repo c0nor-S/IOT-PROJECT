@@ -101,7 +101,7 @@ void handleSetAlarm() {
         server.send(400, "text/plain", "Missing Hour or Minute");
     }
 }
-
+//  '?' Returns One Of Two Values Depending On Wheter Condition Is True Or False 
 void handleDashboard() {
     int temp = isnan(DHT.temperature) ? 0 : DHT.temperature;
     int humi = isnan(DHT.humidity) ? 0 : DHT.humidity;
@@ -186,7 +186,6 @@ void setup() {
         Serial.println("MDNS responder started");
     }
 
-    // Server routes
     //Links All Files To Main
     server.on("/inline", []() { server.send(200, "text/plain", "this works as well"); });
     server.on("/", []() { server.send(200, "text/html", homePagePart1); });
@@ -315,7 +314,7 @@ void loop() {
         int currentHour = timeinfo.tm_hour;
         int currentMinute = timeinfo.tm_min;
 
-        // Trigger Alarm At Set Time - When Input Time = Real Time
+        // Trigger Alarm At Set Time -> When Input Time = Real Time
         if (!alarmTriggered && currentHour == alarmHour && currentMinute == alarmMinute) {
             alarmTriggered = true;
             alarmStartTime = millis();

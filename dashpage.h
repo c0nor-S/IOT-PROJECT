@@ -64,7 +64,7 @@ String dashPagePart6 = F(R"=====(</p>
       fetch('/dashData')
       .then(response => response.text())
       .then(html => {
-        document.quearySelector('.dashboard-readings').innerHTML = html;
+        document.querySelector('.dashboard-readings').innerHTML = html;
       })
       .catch(err => console.error('Error Refreshing Dashboard:', err));
     }
