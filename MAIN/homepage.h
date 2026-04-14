@@ -18,6 +18,9 @@ String homePagePart1 = F(R"=====(<!DOCTYPE html>
       <a target ="_blank" href="cont.html">Control</a>
       
       <a target ="_blank" href="dash.html">Dashboard</a>
+
+      <a target ="_blank" href="https://github.com/c0nor-S/IOT-PROJECT.git">GitHub</a>
+      <!--Bring To GitHub Repository-->
       
       <a target ="_blank" href="demo.html" class="demo">Live Demo</a>
     </div>
