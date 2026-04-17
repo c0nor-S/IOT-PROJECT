@@ -71,19 +71,20 @@ window.addEventListener('DOMContentLoaded', () => {
 
 //When Save Button Is Clicked
     btn.addEventListener('click', () => {
-        //Check Toggle States: Checked = TRUE
-        //Convert Boolean 1 (ON) or 0 (OFF)
+        //Reads Each CheckBox 
+        //Check Toggle States: Checked = (1) TRUE [ON] , Unchecked = (0) FALSE [OFF]
         const light = document.getElementById('light-toggle').checked ? 1 : 0;
         const fan = document.getElementById('fan-toggle').checked ? 1 : 0;
         const sound = document.getElementById('sound-toggle').checked ? 1 : 0;
         const vibration = document.getElementById('vibration-toggle').checked ? 1 : 0;
 
-        //Build Query String Parameters
+        //Build Query String Parameters & Sends GET Request To ESP32
         const params = `light=${light}&fan=${fan}&sound=${sound}&vibration=${vibration}`;
         //Contruct Backend URL
         const url = `/saveSettings?${params}`;
 
         //Send Request To Backend
+        //GET Is Simpler For Embedded Systems - No Request Body To Parse
         fetch(url)
         //Convert Response To Text
             .then(response => response.text())
