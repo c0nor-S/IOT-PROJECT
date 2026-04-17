@@ -16,13 +16,17 @@ String homePagePart1 = F(R"=====(<!DOCTYPE html>
       <!--Brings Back To Home Page-->
 
       <a target ="_blank" href="cont.html">Control</a>
+      <!--Bring To Page With All Options For Alarm Controls-->
       
       <a target ="_blank" href="dash.html">Dashboard</a>
+
+      <!--Bring To Page With All Recorded Stats From Different Sensors (e.g. Temp & Humi - Motion Detetction...) -->
 
       <a target ="_blank" href="https://github.com/c0nor-S/IOT-PROJECT.git">GitHub</a>
       <!--Bring To GitHub Repository-->
       
       <a target ="_blank" href="demo.html" class="demo">Live Demo</a>
+      <!-- Bring To Page With Every Wake Up Option, Set Time, Colour-Scheme...-->
     </div>
   </nav>
 
@@ -42,3 +46,4 @@ String homePagePart1 = F(R"=====(<!DOCTYPE html>
 </body>
 </html>
 )=====");
+

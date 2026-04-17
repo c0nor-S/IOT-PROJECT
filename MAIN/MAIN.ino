@@ -14,11 +14,18 @@
 #include "demoCSS.h"
 #include "demoJS.h"
 
+#include "secrets.h"
+WiFiClient  client;
+
+#include "ThingSpeak.h"
+unsigned long myChannelNumber = 3239866;
+const char * myWriteAPIKey = "P3PEMDKWL41A3RFC";
+
 #include <DFRobot_DHT11.h>
 DFRobot_DHT11 DHT;
 
-const char* ssid = "ConorsiPhone";
-const char* password = "knocknacarra";
+const char* ssid = SECRET_SSID;
+const char* password = SECRET_PASS;
 WebServer server(80);
 
 // Pin definitions
@@ -31,16 +38,18 @@ WebServer server(80);
 #define VIBRATION_PIN 25
 #define BUZZER_PIN 14
 
-// Global variables
+// Global variables : Why Global? - Because They Are Shared Across loop(), sensor functions, and alarm handlers
 int state = LOW;                   // Motion state
 int lightInit;                     // Initial LDR value
 int lightVal;                      // Current LDR reading
 int latestSoundValue = 0;          // Last sound reading
 bool checkSoundAlert = false;
 float currentTemp = 0;
+float currentHumi = 0;
 
 int alarmHour = 0;
 int alarmMinute = 0;
+
 bool lightToggle = false;
 bool buzzerTriggered = false;
 bool buzzerToggle = false;
@@ -97,7 +106,7 @@ void handleSetAlarm() {
         server.send(400, "text/plain", "Missing Hour or Minute");
     }
 }
-//  '?' Returns One Of Two Values Depending On Wheter Condition Is True Or False 
+
 void handleDashboard() {
     int temp = isnan(DHT.temperature) ? 0 : DHT.temperature;
     int humi = isnan(DHT.humidity) ? 0 : DHT.humidity;
@@ -144,20 +153,20 @@ void handleDashboardData() {
 
 void setup() {
     Serial.begin(115200);
-
     // WiFi setup
-    WiFi.mode(WIFI_STA);
+    WiFi.mode(WIFI_STA); // Station Mode: Connects To A Router. AP Mode Would Create Its Own Network Instead
     WiFi.begin(ssid, password);
     Serial.println("");
     delay(2000);
     setupTime();
+    ThingSpeak.begin(client);
 
     // Pin setup
     pinMode(PIR_SENSOR, INPUT);
     pinMode(SOUND_PIN, INPUT);
     pinMode(LDR_SENSOR, INPUT);
     pinMode(DHT_PIN, INPUT);
-    analogReadResolution(12);
+    analogReadResolution(12); //Sets ADC To 12-bit, Instead of 10-bit
     pinMode(LED, OUTPUT);
     pinMode(VIBRATION_PIN, OUTPUT);
     pinMode(FAN_PIN, OUTPUT);
@@ -178,16 +187,18 @@ void setup() {
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
 
+    // Allows Device To Be Reached At http://esp32.local Instead Of Needing To Know Its IP Address
     if (MDNS.begin("esp32")) {
         Serial.println("MDNS responder started");
     }
 
+    // Server routes
     //Links All Files To Main
     server.on("/inline", []() { server.send(200, "text/plain", "this works as well"); });
     server.on("/", []() { server.send(200, "text/html", homePagePart1); });
     server.on("/index.html", []() { server.send(200, "text/html", homePagePart1); });
     server.on("/home.css", []() { server.send(200, "text/css", homeCSS); });
-    server.on("/dashData", handleDashboardData);
+    server.on("/dashData", handleDashboardData); // Returns Only Sensor Cards -- Not Full Page
     server.on("/dash", handleDashboard);
     server.on("/dash.html", handleDashboard);
     server.on("/dash.css", []() { server.send(200, "text/css", dashCSS); });
@@ -198,6 +209,7 @@ void setup() {
     server.on("/demo.js", []() { server.send(200, "application/javascript", demoJS); });
 
     //Saves Toggle Value Depending If ON / OFF
+    //Updates Boolean Globals
     server.on("/saveSettings", []() {
         if (server.hasArg("light")) {
             lightToggle = server.arg("light").toInt() == 1;
@@ -214,7 +226,8 @@ void setup() {
         server.send(200, "text/plain", "Settings Saved");
     });
 
-    //Saves Alarm Time 
+    //Saves Alarm Time
+    //Reads Hour / Minute Parameters
     server.on("/setAlarm", []() {
         if (server.hasArg("hour") && server.hasArg("minute")) {
             alarmHour = server.arg("hour").toInt();
@@ -243,6 +256,7 @@ void handleNotFound() {
     server.send(404, "text/plain", message);
 }
 
+//--------------------------------------- LED -----------------------------------------------------//
 //Triggers LED When Toggle Is On AND Alarm Is Active
 void handleAlarmLED() {
     if (!alarmTriggered || !lightToggle) {
@@ -250,6 +264,8 @@ void handleAlarmLED() {
         return;
     }
 
+//Non-Blocking Blink Using 'millis()' | 'delay()' Would Freeze The Server & The Sensors
+//Checks If 'blinkInterval' (2000ms) Has Elapsed, Then Toggles LED State    
     unsigned long currentMillis = millis();
     if (currentMillis - lastBlinkTime >= blinkInterval) {
         ledState = !ledState;
@@ -257,15 +273,18 @@ void handleAlarmLED() {
         lastBlinkTime = currentMillis;
     }
 }
+//--------------------------------------- BUZZER -----------------------------------------------------//
 //Triggers BUZZER When Toggle Is On AND Alarm Is Active
 void handleAlarmBuzzer() {
     if (!alarmTriggered || !buzzerToggle) {
-        analogWrite(BUZZER_PIN, 0);
+        analogWrite(BUZZER_PIN, 0);     //Silence Buzzer If Not Active
         buzzerTriggered = false;
         return;
     }
 
     if (!buzzerTriggered) {
+        //analogWrite Sends PWM Signal. Value = 128 -> 50% Duty Cycle -> Controls Volume / textContent
+        //digitalWrite Would Only Be Full On Or Full Off With No Volume Control
         analogWrite(BUZZER_PIN, 128);
         buzzerTriggered = true;
         buzzerEnd = millis() + alarm_duration;
@@ -276,6 +295,7 @@ void handleAlarmBuzzer() {
     }
 }
 
+//--------------------------------------- FAN -----------------------------------------------------//
 //Triggers FAN When Toggle Is On And Alarm Is Active
 void handleAlarmFan() {
     if (!alarmTriggered || !fanToggle) {
@@ -290,13 +310,16 @@ void handleAlarmFan() {
     }
 }
 
+//--------------------------------------- VIBRATION -----------------------------------------------------//
 //Triggers VIBRATION When Toggle Is On And Alarm Is Active
 void handleAlarmVibration() {
+//Checks Both Flags With A Ternary | If alarmTriggered && vibrationToggle Are tue -> HIGH, false -> LOW
     digitalWrite(VIBRATION_PIN, (alarmTriggered && vibrationToggle) ? HIGH : LOW);
 }
 
 void loop() {
     unsigned long currentTime = millis();
+    //Must Be Called Every Loop: Processes Any HTTP Requests From The Browser
     server.handleClient();
 
     readDHT(currentTime);
@@ -310,22 +333,22 @@ void loop() {
         int currentHour = timeinfo.tm_hour;
         int currentMinute = timeinfo.tm_min;
 
-        // Trigger Alarm At Set Time -> When Input Time = Real Time
+        // Trigger Alarm At Set Time - When Input Time = Real Time
         if (!alarmTriggered && currentHour == alarmHour && currentMinute == alarmMinute) {
-            alarmTriggered = true;
+            alarmTriggered = true;  // Flag Prevents Re-Triggering During The Same Minute
             alarmStartTime = millis();
             Serial.println("ALARM TRIGGERED");
         }
 
         // Handle All Alarm Devices
         if (alarmTriggered) {
-            handleAlarmLED();
-            handleAlarmBuzzer();
-            handleAlarmFan();
-            handleAlarmVibration();
+            handleAlarmLED();           // Only Fires If lightToggle Is true
+            handleAlarmBuzzer();        // Only Fires If buzzerToggle Is true
+            handleAlarmFan();           // Only Fires If fanToggle Is true & currentTemp > 20 C
+            handleAlarmVibration();     // Only Fires If vibrationToggle Is true
         }
 
-        // End Alarm After Duration
+        // End Alarm After Duration - All Outputs Set To OFF
         if (alarmTriggered && (millis() - alarmStartTime >= alarm_duration)) {
             alarmTriggered = false;
             buzzerTriggered = false;
@@ -335,5 +358,26 @@ void loop() {
             analogWrite(BUZZER_PIN, 0);
             Serial.println("ALARM ENDED: SENSORS OFF");
         }
+    }
+    static unsigned long lastUpdate = 0;
+
+    if (millis() - lastUpdate > 20000) {
+        // ThingSpeak Updates Every 20s With Temp, Humi, Light, Sound & Motion Data
+        if (WiFi.status() ==  WL_CONNECTED) {
+            ThingSpeak.setField(1, currentTemp);
+            ThingSpeak.setField(2, currentHumi);
+            ThingSpeak.setField(3, analogRead(LDR_SENSOR));
+            ThingSpeak.setField(4, analogRead(SOUND_PIN));
+            ThingSpeak.setField(5, (state == HIGH) ? 1 : 0);
+
+    int x = ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
+
+    if (x == 200) {
+        Serial.println("ThingSpeak OK");
+    } else {
+        Serial.println("ThingSpeak error: " + String(x));
+    }
+        }
+    lastUpdate = millis();
     }
 }

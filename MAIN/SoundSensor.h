@@ -9,5 +9,5 @@ void checkSound(unsigned long currentTime) {
     total += analogRead(SOUND_PIN);
     delay(2);
   }
-  int soundValue = total / 10;
+  int latestSoundValue = total / 10;
 }
